@@ -27,11 +27,19 @@ export async function POST(req: Request) {
     },
   });
 
-  user.ownedRooms.forEach((room) => {
+  // Limit to 10 rooms per token to avoid Liveblocks limit
+  const maxRoomsPerToken = 10;
+  
+  // Add owned rooms (up to limit)
+  const ownedRoomsToAdd = user.ownedRooms.slice(0, maxRoomsPerToken);
+  ownedRoomsToAdd.forEach((room) => {
     session.allow(`room:${room.id}`, session.FULL_ACCESS);
   });
 
-  user.roomInvites.forEach((invite) => {
+  // Add room invites (up to remaining limit)
+  const remainingSlots = maxRoomsPerToken - ownedRoomsToAdd.length;
+  const invitesToAdd = user.roomInvites.slice(0, remainingSlots);
+  invitesToAdd.forEach((invite) => {
     session.allow(`room:${invite.room.id}`, session.FULL_ACCESS);
   });
 

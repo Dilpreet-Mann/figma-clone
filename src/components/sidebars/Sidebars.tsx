@@ -46,6 +46,7 @@ export default function Sidebars({
   });
 
   const roomColor = useStorage((root) => root.roomColor);
+  const penColor = useStorage((root) => root.penColor);
 
   const layers = useStorage((root) => root.layers);
   const layerIds = useStorage((root) => root.layerIds);
@@ -55,6 +56,10 @@ export default function Sidebars({
 
   const setRoomColor = useMutation(({ storage }, newColor: Color) => {
     storage.set("roomColor", newColor);
+  }, []);
+
+  const setPenColor = useMutation(({ storage }, newColor: Color) => {
+    storage.set("penColor", newColor);
   }, []);
 
   const updateLayer = useMutation(
@@ -416,6 +421,17 @@ export default function Sidebars({
                 }}
                 value={roomColor ? colorToCss(roomColor) : "#1e1e1e"}
               />
+              <div className="border-b border-gray-200" />
+              <div className="flex flex-col gap-2">
+                <span className="mb-2 text-[11px] font-medium">Pen Color</span>
+                <ColorPicker
+                  onChange={(color) => {
+                    const rgbColor = hexToRgb(color);
+                    setPenColor(rgbColor);
+                  }}
+                  value={penColor ? colorToCss(penColor) : "#d9d9d9"}
+                />
+              </div>
             </div>
           )}
         </div>

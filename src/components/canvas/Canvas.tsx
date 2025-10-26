@@ -118,6 +118,7 @@ export default function Canvas({
     ({ self, setMyPresence }, e: React.PointerEvent, layerId: string) => {
       if (
         canvasState.mode === CanvasMode.Pencil ||
+        canvasState.mode === CanvasMode.Eraser ||
         canvasState.mode === CanvasMode.Inserting
       ) {
         return;
@@ -223,7 +224,7 @@ export default function Canvas({
 
   const insertPath = useMutation(({ storage, self, setMyPresence }) => {
     const liveLayers = storage.get("layers");
-    const { pencilDraft } = self.presence;
+    const { pencilDraft, penColor } = self.presence;
 
     if (
       pencilDraft === null ||
@@ -238,7 +239,7 @@ export default function Canvas({
     liveLayers.set(
       id,
       new LiveObject(
-        penPointsToPathPayer(pencilDraft, { r: 217, g: 217, b: 217 }),
+        penPointsToPathPayer(pencilDraft, penColor || { r: 217, g: 217, b: 217 }),
       ),
     );
 
@@ -247,6 +248,64 @@ export default function Canvas({
     setMyPresence({ pencilDraft: null });
     setState({ mode: CanvasMode.Pencil });
   }, []);
+
+  const eraseLayers = useMutation(
+    ({ storage }, point: Point) => {
+      const liveLayers = storage.get("layers");
+      const liveLayerIds = storage.get("layerIds");
+      
+      // Find layers that intersect with the eraser point
+      const layersToErase: string[] = [];
+      
+      for (const id of liveLayerIds) {
+        const layer = liveLayers.get(id);
+        if (!layer) continue;
+        
+        const layerData = layer.toImmutable();
+        
+        // Check if point is within layer bounds
+        if (
+          point.x >= layerData.x &&
+          point.x <= layerData.x + layerData.width &&
+          point.y >= layerData.y &&
+          point.y <= layerData.y + layerData.height
+        ) {
+          // For path layers, check if point is close to any path point
+          if (layerData.type === LayerType.Path && layerData.points) {
+            const threshold = 20; // Eraser radius
+            const isNearPath = layerData.points.some((pathPoint) => {
+              // Convert relative path points to absolute coordinates
+              const absoluteX = layerData.x + pathPoint[0];
+              const absoluteY = layerData.y + pathPoint[1];
+              
+              const distance = Math.sqrt(
+                Math.pow(point.x - absoluteX, 2) + 
+                Math.pow(point.y - absoluteY, 2)
+              );
+              return distance <= threshold;
+            });
+            
+            if (isNearPath) {
+              layersToErase.push(id);
+            }
+          } else {
+            // For other layer types, just check bounds
+            layersToErase.push(id);
+          }
+        }
+      }
+      
+      // Remove the layers
+      layersToErase.forEach((id) => {
+        liveLayers.delete(id);
+        const index = liveLayerIds.indexOf(id);
+        if (index !== -1) {
+          liveLayerIds.delete(index);
+        }
+      });
+    },
+    [],
+  );
 
   const translateSelectedLayers = useMutation(
     ({ storage, self }, point: Point) => {
@@ -308,10 +367,12 @@ export default function Canvas({
   }, []);
 
   const startDrawing = useMutation(
-    ({ setMyPresence }, point: Point, pressure: number) => {
+    ({ setMyPresence, storage }, point: Point, pressure: number) => {
+      // Get current pen color from storage or use default
+      const currentPenColor = storage.get("penColor") || { r: 217, g: 217, b: 217 };
       setMyPresence({
         pencilDraft: [[point.x, point.y, pressure]],
-        penColor: { r: 217, g: 217, b: 217 },
+        penColor: currentPenColor,
       });
     },
     [],
@@ -358,6 +419,11 @@ export default function Canvas({
 
       if (canvasState.mode === CanvasMode.Pencil) {
         startDrawing(point, e.pressure);
+        return;
+      }
+
+      if (canvasState.mode === CanvasMode.Eraser) {
+        // Eraser functionality will be handled in onPointerMove
         return;
       }
 
@@ -417,6 +483,8 @@ export default function Canvas({
         translateSelectedLayers(point);
       } else if (canvasState.mode === CanvasMode.Pencil) {
         continueDrawing(point, e);
+      } else if (canvasState.mode === CanvasMode.Eraser) {
+        eraseLayers(point);
       } else if (canvasState.mode === CanvasMode.Resizing) {
         resizeSelectedLayer(point);
       }
@@ -427,6 +495,7 @@ export default function Canvas({
       canvasState,
       translateSelectedLayers,
       continueDrawing,
+      eraseLayers,
       resizeSelectedLayer,
       updateSelectionNet,
       startMultiSelection,

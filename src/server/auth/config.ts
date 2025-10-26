@@ -50,9 +50,13 @@ export const authConfig = {
             },
           });
 
+          if (!user) {
+            return null;
+          }
+
           const passwordMatch = await bcrypt.compare(
             password,
-            user?.password ?? "",
+            user.password,
           );
 
           if (!passwordMatch) {

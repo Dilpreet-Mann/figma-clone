@@ -112,6 +112,9 @@ export type CanvasState =
       mode: CanvasMode.Pencil;
     }
   | {
+      mode: CanvasMode.Eraser;
+    }
+  | {
       mode: CanvasMode.Resizing;
       initialBounds: XYWH;
       corner: Side;
@@ -130,6 +133,7 @@ export enum CanvasMode {
   Dragging,
   Inserting,
   Pencil,
+  Eraser,
   Resizing,
   Translating,
   SelectionNet,
