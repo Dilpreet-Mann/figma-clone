@@ -1,6 +1,33 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+// Helper function to check which env vars are missing
+function checkMissingEnvVars() {
+  const required = {
+    DATABASE_URL: process.env.DATABASE_URL,
+    LIVEBLOCKS_PUBLIC_KEY: process.env.LIVEBLOCKS_PUBLIC_KEY,
+    LIVEBLOCKS_SECRET_KEY: process.env.LIVEBLOCKS_SECRET_KEY,
+    ...(process.env.NODE_ENV === "production" && {
+      AUTH_SECRET: process.env.AUTH_SECRET,
+    }),
+  };
+
+  const missing = Object.entries(required)
+    .filter(([_, value]) => !value || (typeof value === "string" && value.trim() === ""))
+    .map(([key]) => key);
+
+  if (missing.length > 0) {
+    console.error("\n❌ Missing required environment variables:");
+    missing.forEach((key) => console.error(`   - ${key}`));
+    console.error("\n📖 Please add these variables in Vercel:");
+    console.error("   Settings → Environment Variables → Add");
+    console.error("\nSee VERCEL_DEPLOYMENT.md for detailed instructions.\n");
+  }
+}
+
+// Check for missing vars before validation
+checkMissingEnvVars();
+
 export const env = createEnv({
   /**
    * Specify your server-side environment variables schema here. This way you can ensure the app
