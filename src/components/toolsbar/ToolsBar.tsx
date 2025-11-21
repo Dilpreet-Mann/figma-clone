@@ -37,7 +37,7 @@ export default function ToolsBar({
 }) {
   const penColor = useStorage((root) => root.penColor);
 
-  const setPenColor = useMutation(({ storage }, newColor: any) => {
+  const setPenColor = useMutation(({ storage }, newColor: { r: number; g: number; b: number }) => {
     storage.set("penColor", newColor);
   }, []);
   return (

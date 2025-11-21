@@ -28,6 +28,7 @@ export function Room({
         }}
         initialStorage={{
           roomColor: { r: 30, g: 30, b: 30 },
+          penColor: { r: 217, g: 217, b: 217 },
           layers: new LiveMap<string, LiveObject<Layer>>(),
           layerIds: new LiveList([]),
         }}

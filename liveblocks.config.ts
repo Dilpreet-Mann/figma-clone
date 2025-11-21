@@ -21,6 +21,7 @@ declare global {
       // Example, a conflict-free list
       // animals: LiveList<string>;
       roomColor: Color | null;
+      penColor: Color | null;
       layers: LiveMap<string, LiveObject<Layer>>;
       layerIds: LiveList<string>;
     };

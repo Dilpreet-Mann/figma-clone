@@ -21,6 +21,7 @@ import {
   Camera,
   CanvasMode,
   CanvasState,
+  Color,
   EllipseLayer,
   Layer,
   LayerType,
@@ -239,7 +240,7 @@ export default function Canvas({
     liveLayers.set(
       id,
       new LiveObject(
-        penPointsToPathPayer(pencilDraft, penColor || { r: 217, g: 217, b: 217 }),
+        penPointsToPathPayer(pencilDraft, penColor ?? { r: 217, g: 217, b: 217 }),
       ),
     );
 
@@ -275,6 +276,9 @@ export default function Canvas({
             const threshold = 20; // Eraser radius
             const isNearPath = layerData.points.some((pathPoint) => {
               // Convert relative path points to absolute coordinates
+              if (pathPoint[0] === undefined || pathPoint[1] === undefined) {
+                return false;
+              }
               const absoluteX = layerData.x + pathPoint[0];
               const absoluteY = layerData.y + pathPoint[1];
               
@@ -369,7 +373,8 @@ export default function Canvas({
   const startDrawing = useMutation(
     ({ setMyPresence, storage }, point: Point, pressure: number) => {
       // Get current pen color from storage or use default
-      const currentPenColor = storage.get("penColor") || { r: 217, g: 217, b: 217 };
+      const storedPenColor = storage.get("penColor");
+      const currentPenColor: Color = storedPenColor ?? { r: 217, g: 217, b: 217 };
       setMyPresence({
         pencilDraft: [[point.x, point.y, pressure]],
         penColor: currentPenColor,
