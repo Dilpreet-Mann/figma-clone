@@ -9,14 +9,14 @@ export const env = createEnv({
   server: {
     AUTH_SECRET:
       process.env.NODE_ENV === "production"
-        ? z.string()
+        ? z.string().min(1, "AUTH_SECRET is required in production")
         : z.string().optional(),
-    DATABASE_URL: z.string().url(),
+    DATABASE_URL: z.string().url("DATABASE_URL must be a valid URL"),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    LIVEBLOCKS_PUBLIC_KEY: z.string(),
-    LIVEBLOCKS_SECRET_KEY: z.string(),
+    LIVEBLOCKS_PUBLIC_KEY: z.string().min(1, "LIVEBLOCKS_PUBLIC_KEY is required"),
+    LIVEBLOCKS_SECRET_KEY: z.string().min(1, "LIVEBLOCKS_SECRET_KEY is required"),
   },
 
   /**
